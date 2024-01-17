@@ -1,0 +1,143 @@
+import random
+import statistics
+
+#Variabler som användaren bestämmer
+area_r = 30
+bomb_r = 15
+bomb_ratio = 0.8
+iterations = 10000
+
+print(f"{area_r}")
+print(f"{bomb_r}")
+
+print(f"{bomb_ratio}")
+print(f"{iterations}")
+
+# Användbara konstanter
+screen_size = area_r * 2
+bomb_d = bomb_r * 2
+
+# Träffytans centrum
+big_cx = area_r
+big_cy = area_r
+
+#Skapar träffytan
+screen = [[0 for i in range(screen_size)] for j in range(screen_size)]
+
+# Antalet träffade pixlar och antalet pixlar som är kvar i cirkeln
+pixels = [
+  0, 0
+]
+
+display_chars = [' ', '.', '#']
+
+# clear screen
+def reset():
+  for y in range(screen_size):
+    for x in range(screen_size):
+      screen[y][x] = 0
+
+  pixels[0] = 0
+  pixels[1] = 0
+
+# visuel representaion av screen, #
+'''
+def print_screen():
+  for y in range(screen_size):
+    print("".join(map(display_chars.__getitem__, screen[y])))
+'''
+# visar om pixel är inuti cirkeln
+def in_circle(x, y, cx, cy, cr):
+  return (x - cx) * (x - cx) + (y - cy) * (y - cy) < cr * cr
+
+# visar om pixel är inuti screen?
+def in_screen(x, y):
+  return 0 <= x < screen_size and 0 <= y < screen_size
+
+# "ritar" staden
+def draw_circle():
+  for y in range(screen_size):
+    for x in range(screen_size):
+      if in_circle(x, y, big_cx, big_cy, area_r):
+        screen[y][x] = 1
+        pixels[0] += 1
+
+# "ritar" en bomb, relativt_y, mittpunkten = [bx, by]
+def draw_bomb(bx, by):
+  for rel_y in range(-bomb_r, bomb_r + 1):
+    for rel_x in range(-bomb_r, bomb_r + 1):
+      y = rel_y + by
+      x = rel_x + bx
+      if in_screen(x, y) and screen[y][x] == 1 and in_circle(x, y, bx, by, bomb_r):
+        screen[y][x] = 2
+        pixels[1] += 1
+
+# slumpmässig kastande av bomb tills den träffar
+def draw_random_bomb():
+  bx = random.randint(0, screen_size - 1)
+  by = random.randint(0, screen_size - 1)
+
+  if in_circle(bx, by, big_cx, big_cy, area_r):
+    draw_bomb(bx, by)
+  else:
+    draw_random_bomb()
+
+# En iteration av täckande av cirkeln
+def one_iteration():
+  reset()
+  draw_circle()
+  dropped_bombs = 0
+
+  while pixels[1] / pixels[0] < bomb_ratio:
+    draw_random_bomb()
+    dropped_bombs += 1
+    # Procentuel kontinuerlig data
+    #print(f"Dropped bombs: {dropped_bombs}, Fill ratio: {round(100 * pixels[1] / pixels[0])}%")
+  
+  # extra data
+  #print_screen()
+
+  return dropped_bombs
+
+data = []
+
+for _ in range(iterations):
+  data.append(one_iteration())
+
+mean_data = statistics.mean(data)
+median_data = statistics.median(data)
+min_data = min(data)
+max_data = max(data)
+
+# mellanrum
+print("")
+
+"""
+print(f"{min_data}")
+print(f"{max_data}")
+
+print(f"{median_data}")
+print(f"{mean_data}")
+"""
+
+print(f"min: {min_data}")
+print(f"max: {max_data}")
+
+print(f"median: {median_data}")
+print(f"medelvärde: {mean_data}")
+
+
+from collections import Counter
+
+counter = Counter(data)
+
+# mellanrum
+print("")
+
+s = []
+
+for d in range(min_data, max_data + 1):
+  if d in counter:
+    s.append([d, counter[d]])
+print("")
+print(s)
